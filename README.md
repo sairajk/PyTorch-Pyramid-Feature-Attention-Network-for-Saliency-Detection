@@ -20,43 +20,50 @@ For training, download the DUTS dataset into the [data](data) directory. Follow 
 ## Folder Structure
 While training, the models are saved in a folder specifying the hyper-parameters for that run under the [models](models) directory . The directory structure looks like this:
 ```
-├── attention.py
 ├── data
 │   └── DUTS
 │       ├── DUTS-TE
 │       │   ├── DUTS-TE-Image
 │       │   │   ├── ILSVRC2012_test_00000003.jpg
 │       │   │   ├── ILSVRC2012_test_00000023.jpg
-│       │   │   └── .
+│       │   │   └── *.jpg
 │       │   └── DUTS-TE-Mask
 │       │       ├── ILSVRC2012_test_00000003.png
 │       │       ├── ILSVRC2012_test_00000023.png
-│       │       └── .
+│       │       └── *.png
 │       └── DUTS-TR
 │           ├── DUTS-TR-Image
 │           │   ├── ILSVRC2012_test_00000004.jpg
 │           │   ├── ILSVRC2012_test_00000018.jpg
-│           │   └── .
+│           │   └── *.jpg
 │           └── DUTS-TR-Mask
 │               ├── ILSVRC2012_test_00000004.png
 │               ├── ILSVRC2012_test_00000018.png
-│               └── .
-├── dataloader.py
+│               └── *.png
+├── images
+│   └── saliency_results.jpg
 ├── inference.py
-├── loss.py
-├── model.py
+├── LICENSE
 ├── models
-│   └── alph-0.7_wbce_w0-1.0_w1-1.15
-│       └── best_model.pth
+│   └── alph-0.7_wbce_w0-1.0_w1-1.15
+│       └── weights
+│           └── best-model_*.pth
+│       └── optimizers
+│           └── best-opt_*.pth
 ├── README.md
 ├── requirements.txt
+├── src
+│   ├── attention.py
+│   ├── dataloader.py
+│   ├── loss.py
+│   ├── model.py
+│   └── utils.py
 ├── train.py
-├── utils.py
 └── Zhao_Pyramid_Feature_Attention_Network_for_Saliency_Detection_CVPR_2019_paper.pdf
-
 ```
+
 ## Pre-trained Model
-The pre-trained model would be made available soon.
+Download the pre-trained model from [Google Drive](https://drive.google.com/file/d/1Sc7dgXCZjF4wVwBihmIry-Xk7wTqrJdr/view?usp=sharing).
 
 ## Usage
 ### Training:
