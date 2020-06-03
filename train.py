@@ -141,20 +141,20 @@ class Engine:
                 # Save the best model
                 if te_mae < best_test_mae:
                     best_test_mae = te_mae
-                    torch.save(mod_chkpt, self.model_path + 'weights/best-model_epoch-{}_mae-{:.4f}_loss-{:.4f}.pth'.
+                    torch.save(mod_chkpt, self.model_path + 'weights/best-model_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
                                format(epoch, best_test_mae, te_avg_loss))
                     if self.save_opt:
-                        torch.save(opt_chkpt, self.model_path + 'optimizers/best-opt_epoch-{}_mae-{:.4f}_loss-{:.4f}.pth'.
+                        torch.save(opt_chkpt, self.model_path + 'optimizers/best-opt_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
                                    format(epoch, best_test_mae, te_avg_loss))
                     print('Best Model Saved !!!\n')
                     continue
                 
                 # Save model at regular intervals
                 if self.save_interval is not None and epoch % self.save_interval == 0:
-                    torch.save(mod_chkpt, self.model_path + 'weights/model_epoch-{}_mae-{:.4f}_loss-{:.4f}.pth'.
+                    torch.save(mod_chkpt, self.model_path + 'weights/model_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
                                format(epoch, te_mae, te_avg_loss))
                     if self.save_opt:
-                        torch.save(opt_chkpt, self.model_path + 'optimizers/opt_epoch-{}_mae-{:.4f}_loss-{:.4f}.pth'.
+                        torch.save(opt_chkpt, self.model_path + 'optimizers/opt_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
                                    format(epoch, best_test_mae, te_avg_loss))
                     print('Model Saved !!!\n')
                     continue
