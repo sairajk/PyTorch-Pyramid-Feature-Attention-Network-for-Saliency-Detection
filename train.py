@@ -122,21 +122,21 @@ class Engine:
             if epoch % self.test_interval == 0 or epoch % self.save_interval == 0:
                 te_avg_loss, te_acc, te_pre, te_rec, te_mae = self.test()
                 mod_chkpt = {'epoch': epoch,
-                            'test_mae' : te_mae,
+                            'test_mae' : float(te_mae),
                             'model' : self.model.state_dict(),
-                            'test_loss': te_avg_loss,
-                            'test_acc': te_acc,
-                            'test_pre': te_pre,
-                            'test_rec': te_rec}
+                            'test_loss': float(te_avg_loss),
+                            'test_acc': float(te_acc),
+                            'test_pre': float(te_pre),
+                            'test_rec': float(te_rec)}
 
                 if self.save_opt:
                     opt_chkpt = {'epoch': epoch,
-                                'test_mae' : te_mae,
+                                'test_mae' : float(te_mae),
                                 'optimizer': self.optimizer.state_dict(),
-                                'test_loss': te_avg_loss,
-                                'test_acc': te_acc,
-                                'test_pre': te_pre,
-                                'test_rec': te_rec}
+                                'test_loss': float(te_avg_loss),
+                                'test_acc': float(te_acc),
+                                'test_pre': float(te_pre),
+                                'test_rec': float(te_rec)}
 
                 # Save the best model
                 if te_mae < best_test_mae:
