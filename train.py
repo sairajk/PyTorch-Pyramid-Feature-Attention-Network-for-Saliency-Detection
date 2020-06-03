@@ -11,9 +11,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from dataloader import SODLoader
-from model import SODModel
-from loss import EdgeSaliencyLoss
+from src.dataloader import SODLoader
+from src.model import SODModel
+from src.loss import EdgeSaliencyLoss
 
 
 def parse_arguments():
@@ -26,9 +26,11 @@ def parse_arguments():
     parser.add_argument('--aug', default=True, help='Whether to use Image augmentation', type=bool)
     parser.add_argument('--n_worker', default=2, help='Number of workers to use for loading data', type=int)
     parser.add_argument('--test_interval', default=2, help='Number of epochs after which to test the weights', type=int)
-    parser.add_argument('--save_interval', default=15, help='Number of epochs after which to save the weights', type=int)
+    parser.add_argument('--save_interval', default=None, help='Number of epochs after which to save the weights. If None, does not save', type=int)
+    parser.add_argument('--save_opt', default=False, help='Whether to save optimizer along with model weights or not', type=bool)
     parser.add_argument('--log_interval', default=250, help='Logging interval (in #batches)', type=int)
-    parser.add_argument('--resume', default=None, help='Path to the model to resume from', type=str)
+    parser.add_argument('--res_mod', default=None, help='Path to the model to resume from', type=str)
+    parser.add_argument('--res_opt', default=None, help='Path to the optimizer to resume from', type=str)
     parser.add_argument('--use_gpu', default=True, help='Flag to use GPU or not', type=bool)
     parser.add_argument('--base_save_path', default='./models', help='Base path for the models to be saved', type=str)
     # Hyper-parameters for Loss
@@ -51,8 +53,10 @@ class Engine:
         self.n_worker = args.n_worker
         self.test_interval = args.test_interval
         self.save_interval = args.save_interval
+        self.save_opt = args.save_opt
         self.log_interval = args.log_interval
-        self.resume_chkpt = args.resume
+        self.res_mod_path = args.res_mod
+        self.res_opt_path = args.res_opt
         self.use_gpu = args.use_gpu
 
         self.alpha_sal = args.alpha_sal
@@ -60,9 +64,11 @@ class Engine:
         self.wbce_w1 = args.wbce_w1
 
         self.model_path = args.base_save_path + '/alph-{}_wbce_w0-{}_w1-{}'.format(str(self.alpha_sal), str(self.wbce_w0), str(self.wbce_w1))
-        print("Models would be saved at : {}\n".format(self.model_path))
-        if not os.path.exists(self.model_path):
-            os.makedirs(self.model_path)
+        print('Models would be saved at : {}\n'.format(self.model_path))
+        if not os.path.exists(os.path.join(self.model_path, 'weights')):
+            os.makedirs(os.path.join(self.model_path, 'weights'))
+        if not os.path.exists(os.path.join(self.model_path, 'optimizers')):
+            os.makedirs(os.path.join(self.model_path, 'optimizers'))
 
         if torch.cuda.is_available():
             self.device = torch.device(device='cuda')
@@ -75,11 +81,14 @@ class Engine:
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
 
         # Load model and optimizer if resumed
-        if self.resume_chkpt is not None:
-            chkpt = torch.load(self.resume_chkpt, map_location=self.device)
+        if self.res_mod_path is not None:
+            chkpt = torch.load(self.res_mod_path, map_location=self.device)
             self.model.load_state_dict(chkpt['model'])
+            print("Resuming training with checkpoint : {}\n".format(self.res_mod_path))
+        if self.res_opt_path is not None:
+            chkpt = torch.load(self.res_opt_path, map_location=self.device)
             self.optimizer.load_state_dict(chkpt['optimizer'])
-            print("Resuming training from model : {}\n".format(self.resume_chkpt))
+            print("Resuming training with optimizer : {}\n".format(self.res_opt_path))
 
         self.train_data = SODLoader(mode='train', augment_data=self.aug, target_size=self.img_size)
         self.test_data = SODLoader(mode='test', augment_data=False, target_size=self.img_size)
@@ -112,27 +121,41 @@ class Engine:
             # Validation
             if epoch % self.test_interval == 0 or epoch % self.save_interval == 0:
                 te_avg_loss, te_acc, te_pre, te_rec, te_mae = self.test()
-                chkpt = {'epoch': epoch,
-                        'test_mae' : te_mae,
-                        'model' : self.model.state_dict(),
-                        'optimizer': self.optimizer.state_dict(),
-                        'test_loss': te_avg_loss,
-                        'test_acc': te_acc,
-                        'test_pre': te_pre,
-                        'test_rec': te_rec}
+                mod_chkpt = {'epoch': epoch,
+                            'test_mae' : te_mae,
+                            'model' : self.model.state_dict(),
+                            'test_loss': te_avg_loss,
+                            'test_acc': te_acc,
+                            'test_pre': te_pre,
+                            'test_rec': te_rec}
+
+                if self.save_opt:
+                    opt_chkpt = {'epoch': epoch,
+                                'test_mae' : te_mae,
+                                'optimizer': self.optimizer.state_dict(),
+                                'test_loss': te_avg_loss,
+                                'test_acc': te_acc,
+                                'test_pre': te_pre,
+                                'test_rec': te_rec}
 
                 # Save the best model
                 if te_mae < best_test_mae:
                     best_test_mae = te_mae
-                    torch.save(chkpt, self.model_path + '/best_epoch-{}_mae-{:.4f}_loss-{:.4f}'.
-                               format(epoch, best_test_mae, te_avg_loss) + '.pth')
+                    torch.save(mod_chkpt, self.model_path + 'weights/best-model_epoch-{}_mae-{:.4f}_loss-{:.4f}.pth'.
+                               format(epoch, best_test_mae, te_avg_loss))
+                    if self.save_opt:
+                        torch.save(opt_chkpt, self.model_path + 'optimizers/best-opt_epoch-{}_mae-{:.4f}_loss-{:.4f}.pth'.
+                                   format(epoch, best_test_mae, te_avg_loss))
                     print('Best Model Saved !!!\n')
                     continue
                 
                 # Save model at regular intervals
-                if epoch % self.save_interval == 0:
-                    torch.save(chkpt, self.model_path + '/model_epoch-{}_mae-{:.4f}_loss-{:.4f}'.
-                               format(epoch, te_mae, te_avg_loss) + '.pth')
+                if self.save_interval is not None and epoch % self.save_interval == 0:
+                    torch.save(mod_chkpt, self.model_path + 'weights/model_epoch-{}_mae-{:.4f}_loss-{:.4f}.pth'.
+                               format(epoch, te_mae, te_avg_loss))
+                    if self.save_opt:
+                        torch.save(opt_chkpt, self.model_path + 'optimizers/opt_epoch-{}_mae-{:.4f}_loss-{:.4f}.pth'.
+                                   format(epoch, best_test_mae, te_avg_loss))
                     print('Model Saved !!!\n')
                     continue
             print('\n')

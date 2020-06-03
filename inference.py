@@ -11,8 +11,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from model import SODModel
-from dataloader import InfDataloader, SODLoader
+from src.model import SODModel
+from src.dataloader import InfDataloader, SODLoader
 
 
 def parse_arguments():
