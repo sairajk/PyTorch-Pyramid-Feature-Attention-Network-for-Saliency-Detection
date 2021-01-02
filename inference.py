@@ -17,8 +17,8 @@ from src.dataloader import InfDataloader, SODLoader
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Parameters to train your model.')
-    parser.add_argument('--imgs_folder', default='./data/DUTS/DUTS-TE/DUTS-TE-Image', help='Path to folder containing images', type=str)
-    parser.add_argument('--model_path', default='/home/tarasha/Projects/sairajk/saliency/SOD_2/models/0.7_wbce_w0-1_w1-1.12/best_epoch-138_acc-0.9107_loss-0.1300.pt', help='Path to model', type=str)
+    parser.add_argument('--imgs_folder', default='/content/test', help='Path to folder containing images', type=str)
+    parser.add_argument('--model_path', default='/content/drive/My Drive/Colab Notebooks/models/model_epoch-008_mae-0.1553_loss-0.3755.pth', help='Path to model', type=str)
     parser.add_argument('--use_gpu', default=True, help='Whether to use GPU or not', type=bool)
     parser.add_argument('--img_size', default=256, help='Image size to be used', type=int)
     parser.add_argument('--bs', default=24, help='Batch Size for testing', type=int)
@@ -59,9 +59,9 @@ def run_inference(args):
             pred_masks_round = np.squeeze(pred_masks.round().cpu().numpy(), axis=(0, 1))
 
             print('Image :', batch_idx)
-            cv2.imshow('Input Image', img_np)
-            cv2.imshow('Generated Saliency Mask', pred_masks_raw)
-            cv2.imshow('Rounded-off Saliency Mask', pred_masks_round)
+            cv2.imwrite('/content/test/'+'Input Image'+ str(batch_idx) + '.png', img_np)
+            cv2.imwrite('/content/test/'+'Generated Saliency Mask'+ str(batch_idx) + '.png', pred_masks_raw)
+            cv2.imwrite('/content/test/'+'Rounded-off Saliency Mask'+ str(batch_idx) + '.png', pred_masks_round)
 
             key = cv2.waitKey(0)
             if key == ord('q'):
@@ -101,5 +101,5 @@ def calculate_mae(args):
 
 if __name__ == '__main__':
     rt_args = parse_arguments()
-    calculate_mae(rt_args)
+    #calculate_mae(rt_args)
     run_inference(rt_args)
